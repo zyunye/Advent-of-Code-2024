@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 func check(e error) {
@@ -32,10 +33,7 @@ func read_input(file_name string) ([]string, error) {
 
 }
 
-func part1() {
-	lines, err := read_input("input.txt")
-	check(err)
-
+func parse_and_split(lines []string) ([]int64, []int64) {
 	var arr1 []int64
 	var arr2 []int64
 	for _, line := range lines {
@@ -49,8 +47,20 @@ func part1() {
 		arr2 = append(arr2, n2)
 		
 	}
-	slices.Sort(arr1)
-	slices.Sort(arr2)
+
+	return arr1, arr2
+}
+
+func part1() {
+	lines, err := read_input("input.txt")
+	check(err)
+	arr1, arr2 := parse_and_split(lines)
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {defer wg.Done(); slices.Sort(arr1)}()
+	go func() {defer wg.Done(); slices.Sort(arr2)}()
+	wg.Wait()
 
 	var sum int64
 	for i := range(arr1) {
@@ -66,20 +76,7 @@ func part1() {
 func part2() {
 	lines, err := read_input("input.txt")
 	check(err)
-
-	var arr1 []int64
-	var arr2 []int64
-	for _, line := range lines {
-		nums := strings.Fields(line)
-		n1, err := strconv.ParseInt(nums[0], 10, 64)
-		check(err)
-		n2, err := strconv.ParseInt(nums[1], 10, 64)
-		check(err)
-
-		arr1 = append(arr1, n1)
-		arr2 = append(arr2, n2)
-		
-	}
+	arr1, arr2 := parse_and_split(lines)
 
 	num_map := make(map[int64]int64)
 	for _, n2 := range(arr2) {
