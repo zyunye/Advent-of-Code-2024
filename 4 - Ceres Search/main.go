@@ -87,7 +87,6 @@ func walker_p1(x int, y int, dir Direction, char_map [][]rune, results chan<- in
 	curY := y
 	for i := 0; i < 4; i++ {
 		if !check_inbound(curX, curY, char_map) {
-			results <- 0
 			return
 		}
 
@@ -104,7 +103,6 @@ func walker_p1(x int, y int, dir Direction, char_map [][]rune, results chan<- in
 			results <- 1
 			return
 		} else {
-			results <- 0
 			return
 		}
 	}
@@ -153,22 +151,18 @@ func walker_p2(x int, y int, char_map [][]rune, results chan<- int, wg *sync.Wai
 		if char_map[y][x] == 'A' {
 			ulx, uly := walk(x, y, UPLEFT)
 			if !check_inbound(ulx, uly, char_map) {
-				results <- 0
 				return
 			}
 			urx, ury := walk(x, y, UPRIGHT)
 			if !check_inbound(urx, ury, char_map) {
-				results <- 0
 				return
 			}
 			dlx, dly := walk(x, y, DOWNLEFT)
 			if !check_inbound(dlx, dly, char_map) {
-				results <- 0
 				return
 			}
 			drx, dry := walk(x, y, DOWNRIGHT)
 			if !check_inbound(drx, dry, char_map) {
-				results <- 0
 				return
 			}
 
