@@ -5,6 +5,14 @@ type Position struct {
 	R int
 }
 
+func (p1 Position) Add(p2 Position) Position {
+	return Position{C: p1.C + p2.C, R: p1.R + p2.R}
+}
+
+func (p1 Position) Equal(p2 Position) bool {
+	return p1.C == p2.C && p1.R == p2.R
+}
+
 var UP = Position{0, -1}
 var DOWN = Position{0, 1}
 var LEFT = Position{-1, 0}
