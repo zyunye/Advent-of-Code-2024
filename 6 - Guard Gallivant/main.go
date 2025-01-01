@@ -15,12 +15,12 @@ func check(e error) {
 	}
 }
 
-func read_input(file_name string) (Coordinate, [][]rune) {
+func read_input(file_name string) (Position, [][]rune) {
 	file, err := os.Open(file_name)
 	check(err)
 	defer file.Close()
 
-	var start_pos Coordinate
+	var start_pos Position
 	var lab [][]rune
 
 	scanner := bufio.NewScanner(file)
@@ -31,7 +31,7 @@ func read_input(file_name string) (Coordinate, [][]rune) {
 		for c, v := range line {
 			lab[r][c] = v
 			if v == '^' {
-				start_pos = Coordinate{R: r, C: c}
+				start_pos = Position{R: r, C: c}
 			}
 		}
 		r += 1
@@ -40,18 +40,18 @@ func read_input(file_name string) (Coordinate, [][]rune) {
 	return start_pos, lab
 }
 
-func step(pos Coordinate, dir Direction, lab [][]rune) (Coordinate, bool) {
-	new_coord := Coordinate{R: pos.R + dir.Y, C: pos.C + dir.X}
+func step(pos Position, dir Position, lab [][]rune) (Position, bool) {
+	new_coord := Position{R: pos.R + dir.R, C: pos.C + dir.C}
 	if new_coord.R < 0 || new_coord.R >= len(lab) {
-		return Coordinate{R: -1, C: -1}, true
+		return Position{R: -1, C: -1}, true
 	} else if new_coord.C < 0 || new_coord.C >= len(lab[new_coord.R]) {
-		return Coordinate{R: -1, C: -1}, true
+		return Position{R: -1, C: -1}, true
 	}
 	return new_coord, false
 }
 
-func traverse(start Coordinate, lab [][]rune) <-chan Coordinate {
-	ch := make(chan Coordinate)
+func traverse(start Position, lab [][]rune) <-chan Position {
+	ch := make(chan Position)
 
 	go func() {
 		defer close(ch)
@@ -81,7 +81,7 @@ func part1(file_name string) {
 	start_pos, lab := read_input(file_name)
 	path_gen := traverse(start_pos, lab)
 
-	seen := make(map[Coordinate]int)
+	seen := make(map[Position]int)
 	for coord := range path_gen {
 		seen[coord] = 1
 	}
@@ -97,14 +97,14 @@ func copy_arr(arr [][]rune) [][]rune {
 	return new_arr
 }
 
-func loop_checker(start_pos Coordinate, lab [][]rune, results chan<- int, wg *sync.WaitGroup) {
+func loop_checker(start_pos Position, lab [][]rune, results chan<- int, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	cur_path := traverse(start_pos, lab)
 	iter_max := len(lab) * len(lab[0])
 	cur_iter := 0
 
-	seen := make(map[Coordinate]int)
+	seen := make(map[Position]int)
 
 	for coord := range cur_path {
 		if cur_iter >= iter_max {
@@ -123,7 +123,7 @@ func part2(file_name string) {
 	start_pos, lab := read_input(file_name)
 
 	path_gen := traverse(start_pos, lab)
-	orig_path := make(map[Coordinate]int)
+	orig_path := make(map[Position]int)
 	for coord := range path_gen {
 		orig_path[coord] = 1
 	}

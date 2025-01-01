@@ -7,11 +7,11 @@ import (
 	"os"
 )
 
-func read_input(file_name string) (map[string][]Coordinate, int, int) {
+func read_input(file_name string) (map[string][]Position, int, int) {
 	file, err := os.Open(file_name)
 	CheckErr(err)
 
-	nodes := make(map[string][]Coordinate)
+	nodes := make(map[string][]Position)
 
 	scanner := bufio.NewScanner(file)
 
@@ -26,10 +26,10 @@ func read_input(file_name string) (map[string][]Coordinate, int, int) {
 				continue
 			}
 			if _, ok := nodes[v]; !ok {
-				nodes[v] = make([]Coordinate, 0)
-				nodes[v] = append(nodes[v], Coordinate{R: r, C: c})
+				nodes[v] = make([]Position, 0)
+				nodes[v] = append(nodes[v], Position{R: r, C: c})
 			} else {
-				nodes[v] = append(nodes[v], Coordinate{R: r, C: c})
+				nodes[v] = append(nodes[v], Position{R: r, C: c})
 			}
 		}
 		r += 1
@@ -39,18 +39,18 @@ func read_input(file_name string) (map[string][]Coordinate, int, int) {
 	return nodes, r, max_c + 1
 }
 
-func deltas(c1 Coordinate, c2 Coordinate) (int, int) {
+func deltas(c1 Position, c2 Position) (int, int) {
 	return c2.R - c1.R, c2.C - c1.C
 }
 
-func calc_antinodes(c1 Coordinate, c2 Coordinate, dr int, dc int) (Coordinate, Coordinate) {
-	anti1 := Coordinate{R: c1.R - dr, C: c1.C - dc}
-	anti2 := Coordinate{R: c2.R + dr, C: c2.C + dc}
+func calc_antinodes(c1 Position, c2 Position, dr int, dc int) (Position, Position) {
+	anti1 := Position{R: c1.R - dr, C: c1.C - dc}
+	anti2 := Position{R: c2.R + dr, C: c2.C + dc}
 
 	return anti1, anti2
 }
 
-func is_inbounds(coord Coordinate, r int, c int) bool {
+func is_inbounds(coord Position, r int, c int) bool {
 	if coord.R < 0 || coord.R >= r {
 		return false
 	} else if coord.C < 0 || coord.C >= c {
@@ -62,7 +62,7 @@ func is_inbounds(coord Coordinate, r int, c int) bool {
 func part1(file_name string) {
 	nodes, map_r, map_c := read_input(file_name)
 
-	antinodes := make(map[Coordinate]int)
+	antinodes := make(map[Position]int)
 
 	for key := range nodes {
 
@@ -91,7 +91,7 @@ func part1(file_name string) {
 func part2(file_name string) {
 	nodes, map_r, map_c := read_input(file_name)
 
-	antinodes := make(map[Coordinate]int)
+	antinodes := make(map[Position]int)
 
 	for key := range nodes {
 

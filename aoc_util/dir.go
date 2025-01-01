@@ -1,30 +1,30 @@
 package aoc
 
-type Direction struct {
-	X int
-	Y int
+type Position struct {
+	C int
+	R int
 }
 
-var UP = Direction{0, -1}
-var DOWN = Direction{0, 1}
-var LEFT = Direction{-1, 0}
-var RIGHT = Direction{1, 0}
+var UP = Position{0, -1}
+var DOWN = Position{0, 1}
+var LEFT = Position{-1, 0}
+var RIGHT = Position{1, 0}
 
-var TURN_ORDER = [4]Direction{
+var TURN_ORDER = [4]Position{
 	UP,
 	RIGHT,
 	DOWN,
 	LEFT,
 }
 
-var TURN_MAP = map[Direction]int{
+var TURN_MAP = map[Position]int{
 	UP:    0,
 	RIGHT: 1,
 	DOWN:  2,
 	LEFT:  3,
 }
 
-func Turn(cur_dir Direction, dir Direction) Direction {
+func Turn(cur_dir Position, dir Position) Position {
 	dir_ind := TURN_MAP[cur_dir]
 	switch dir {
 	case RIGHT:
@@ -42,5 +42,5 @@ func Turn(cur_dir Direction, dir Direction) Direction {
 		dir_ind = (dir_ind + 2) % 4
 		return TURN_ORDER[dir_ind]
 	}
-	return Direction{-1, -1}
+	return Position{-1, -1}
 }
