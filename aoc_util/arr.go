@@ -19,3 +19,22 @@ func Pop[T any](arr *[]T) T {
 	*arr = (*arr)[:l-1]
 	return ret
 }
+
+func Remove[T any](i int, arr *[]T) T {
+	if i < 0 || i >= len((*arr)) {
+		panic("Remove: Index out of bounds")
+	}
+	ret := (*arr)[i]
+	*arr = append((*arr)[:i], (*arr)[i+1:]...)
+	return ret
+}
+
+func Insert[T any](i int, v T, arr *[]T) {
+	if i < 0 {
+		panic("Remove: Index out of bounds")
+	} else if i == len((*arr)) {
+		*arr = append((*arr), v)
+	} else {
+		*arr = append((*arr)[:i], append([]T{v}, (*arr)[i:]...)...)
+	}
+}
