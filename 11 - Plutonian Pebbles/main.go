@@ -3,6 +3,7 @@ package main
 import (
 	. "aoc"
 	"bufio"
+	"context"
 	"fmt"
 	"math"
 	"os"
@@ -75,6 +76,17 @@ func process_stone(num int, len_cache *SafeLenCache, ret_ch chan<- int, wg *sync
 	}
 }
 
+func worker(jobs_ch <-chan int, len_cache *SafeLenCache, ret_ch chan<- int, wg *sync.WaitGroup, ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case stone := <-jobs_ch:
+			go process_stone(stone, len_cache, ret_ch, wg)
+		}
+	}
+}
+
 type SafeLenCache struct {
 	mu    sync.Mutex
 	cache map[int]int
@@ -86,30 +98,34 @@ func part_len_cache(file_name string) {
 	len_cache := SafeLenCache{cache: make(map[int]int)}
 
 	var wg sync.WaitGroup
+	ctx, cancel := context.WithCancel(context.Background())
+	numWorkers := 8
+	jobs_ch := make(chan int, numWorkers)
+	ret_ch := make(chan int)
+
+	for i := 0; i < numWorkers; i++ {
+		go worker(jobs_ch, &len_cache, ret_ch, &wg, ctx)
+	}
 
 	for blink := 0; blink < 25; blink++ {
 		fmt.Printf("Blink: %d, %d\n", blink, len(pebbles))
-		ret := make(chan int)
 
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for i := 0; i < len(pebbles); i++ {
-				num := pebbles[i]
-
-				wg.Add(1)
-				go process_stone(num, &len_cache, ret, &wg)
-
-			}
-		}()
+		for i := 0; i < len(pebbles); i++ {
+			num := pebbles[i]
+			wg.Add(1)
+			jobs_ch <- num
+		}
 
 		go func() {
 			wg.Wait()
-			close(ret)
+			ret_ch <- -1
 		}()
 
 		i := 0
-		for stone := range ret {
+		for stone := range ret_ch {
+			if stone == -1 {
+				break
+			}
 			if i < len(pebbles) {
 				pebbles[i] = stone
 				i++
@@ -119,6 +135,7 @@ func part_len_cache(file_name string) {
 			}
 		}
 	}
+	cancel()
 
 	fmt.Printf("P.1_len: %d\n", len(pebbles))
 
