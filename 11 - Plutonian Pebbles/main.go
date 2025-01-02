@@ -44,51 +44,28 @@ func get_num_len(num int) int {
 	return digits
 }
 
-func split_stone(i int, num_len int, pebbles *[]int) []int {
-	val := (*pebbles)[i]
+func split_stone(num int, num_len int) (int, int) {
 	div := int(math.Pow10(num_len / 2))
-	left := val / div
-	right := val - (left * div)
+	left := num / div
+	right := num - (left * div)
 
-	(*pebbles)[i] = left
-	Insert(i+1, right, pebbles)
-	return []int{left, right}
+	return left, right
 }
 
-func part_num_cache(file_name string) {
-	pebbles := read_input(file_name)
-
-	num_cache := make(map[int][]int)
-
-	for blink := 0; blink < 25; blink++ {
-		fmt.Printf("Blink: %d, %d\n", blink, len(pebbles))
-		for i := 0; i < len(pebbles); i++ {
-
-			num := pebbles[i]
-			next, ok := num_cache[num]
-			if !ok {
-				num_len := get_num_len(num)
-				if num == 0 {
-					pebbles[i] = 1
-				} else if num_len%2 == 0 {
-					split_nums := split_stone(i, num_len, &pebbles)
-					num_cache[num] = split_nums
-					i++
-				} else {
-					pebbles[i] *= 2024
-					num_cache[num] = []int{pebbles[i]}
-				}
-			} else {
-				pebbles = append(pebbles[:i], append(next, pebbles[i+1:]...)...)
-				if len(next) > 1 {
-					i++
-				}
-			}
-		}
+func process_stone(num int, len_cache *map[int]int) (int, int) {
+	num_len, ok := (*len_cache)[num]
+	if !ok {
+		num_len = get_num_len(num)
+		(*len_cache)[num] = num_len
 	}
 
-	fmt.Printf("P.1_num: %d\n", len(pebbles))
-
+	if num == 0 {
+		return 1, -1
+	} else if num_len%2 == 0 {
+		return split_stone(num, num_len)
+	} else {
+		return num * 2024, -1
+	}
 }
 
 func part_len_cache(file_name string) {
@@ -101,30 +78,19 @@ func part_len_cache(file_name string) {
 	for blink := 0; blink < 25; blink++ {
 		fmt.Printf("Blink: %d, %d\n", blink, len(pebbles))
 		for i := 0; i < len(pebbles); i++ {
-
 			num := pebbles[i]
-			num_len, ok := len_cache[num]
-			if !ok {
-				num_len = get_num_len(num)
-				len_cache[num] = num_len
-			}
+			l, r := process_stone(num, &len_cache)
 
-			if num == 0 {
-				pebbles[i] = 1
-			} else if num_len%2 == 0 {
-				split_stone(i, num_len, &pebbles)
+			pebbles[i] = l
+			if r != -1 {
+				Insert(i+1, r, &pebbles)
 				i++
-			} else {
-				pebbles[i] *= 2024
 			}
 		}
 	}
 
 	fmt.Printf("P.1_len: %d\n", len(pebbles))
 
-}
-
-func part2(file_name string) {
 }
 
 func main() {
@@ -144,5 +110,4 @@ func main() {
 	part_len_cache(file_name)
 	fmt.Printf("P1 time: %s", time.Since(start))
 
-	part2(file_name)
 }
