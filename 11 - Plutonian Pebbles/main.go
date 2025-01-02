@@ -9,6 +9,7 @@ import (
 	"runtime/pprof"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -52,38 +53,68 @@ func split_stone(num int, num_len int) (int, int) {
 	return left, right
 }
 
-func process_stone(num int, len_cache *map[int]int) (int, int) {
-	num_len, ok := (*len_cache)[num]
+func process_stone(num int, len_cache *SafeLenCache, ret_ch chan<- int, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	len_cache.mu.Lock()
+	num_len, ok := len_cache.cache[num]
 	if !ok {
 		num_len = get_num_len(num)
-		(*len_cache)[num] = num_len
+		len_cache.cache[num] = num_len
 	}
+	len_cache.mu.Unlock()
 
 	if num == 0 {
-		return 1, -1
+		ret_ch <- 1
 	} else if num_len%2 == 0 {
-		return split_stone(num, num_len)
+		l, r := split_stone(num, num_len)
+		ret_ch <- l
+		ret_ch <- r
 	} else {
-		return num * 2024, -1
+		ret_ch <- num * 2024
 	}
+}
+
+type SafeLenCache struct {
+	mu    sync.Mutex
+	cache map[int]int
 }
 
 func part_len_cache(file_name string) {
 	pebbles := read_input(file_name)
-	// pebbles := make([]int, 0, 1e10)
-	// pebbles = append(pebbles, pebbles_orig...)
 
-	len_cache := make(map[int]int)
+	len_cache := SafeLenCache{cache: make(map[int]int)}
+
+	var wg sync.WaitGroup
 
 	for blink := 0; blink < 25; blink++ {
 		fmt.Printf("Blink: %d, %d\n", blink, len(pebbles))
-		for i := 0; i < len(pebbles); i++ {
-			num := pebbles[i]
-			l, r := process_stone(num, &len_cache)
+		ret := make(chan int)
 
-			pebbles[i] = l
-			if r != -1 {
-				Insert(i+1, r, &pebbles)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := 0; i < len(pebbles); i++ {
+				num := pebbles[i]
+
+				wg.Add(1)
+				go process_stone(num, &len_cache, ret, &wg)
+
+			}
+		}()
+
+		go func() {
+			wg.Wait()
+			close(ret)
+		}()
+
+		i := 0
+		for stone := range ret {
+			if i < len(pebbles) {
+				pebbles[i] = stone
+				i++
+			} else {
+				pebbles = append(pebbles, stone)
 				i++
 			}
 		}
