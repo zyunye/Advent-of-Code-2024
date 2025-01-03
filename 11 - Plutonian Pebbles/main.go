@@ -82,7 +82,7 @@ func worker(jobs_ch <-chan int, len_cache *SafeLenCache, ret_ch chan<- int, wg *
 		case <-ctx.Done():
 			return
 		case stone := <-jobs_ch:
-			go process_stone(stone, len_cache, ret_ch, wg)
+			process_stone(stone, len_cache, ret_ch, wg)
 		}
 	}
 }
@@ -94,55 +94,60 @@ type SafeLenCache struct {
 
 func part_len_cache(file_name string) {
 	pebbles := read_input(file_name)
+	pebbles_buffer := make([]int, 0)
+	pebbles_buffer = append(pebbles_buffer, pebbles...)
 
 	len_cache := SafeLenCache{cache: make(map[int]int)}
 
-	var wg sync.WaitGroup
+	var worker_lock sync.WaitGroup
+	// var main_lock sync.WaitGroup
+
 	ctx, cancel := context.WithCancel(context.Background())
-	numWorkers := 8
+	numWorkers := 16
 	jobs_ch := make(chan int, numWorkers)
-	ret_ch := make(chan int)
+	ret_ch := make(chan int, numWorkers)
 
 	for i := 0; i < numWorkers; i++ {
-		go worker(jobs_ch, &len_cache, ret_ch, &wg, ctx)
+		go worker(jobs_ch, &len_cache, ret_ch, &worker_lock, ctx)
 	}
 
-	for blink := 0; blink < 25; blink++ {
+	for blink := 0; blink < 75; blink++ {
+		pebbles, pebbles_buffer = pebbles_buffer, pebbles
 		fmt.Printf("Blink: %d, %d\n", blink, len(pebbles))
 
-		for i := 0; i < len(pebbles); i++ {
-			num := pebbles[i]
-			wg.Add(1)
-			jobs_ch <- num
-		}
-
 		go func() {
-			wg.Wait()
+			for i := 0; i < len(pebbles); i++ {
+				num := pebbles[i]
+				worker_lock.Add(1)
+				jobs_ch <- num
+			}
+			worker_lock.Wait()
 			ret_ch <- -1
 		}()
+
 
 		i := 0
 		for stone := range ret_ch {
 			if stone == -1 {
 				break
 			}
-			if i < len(pebbles) {
-				pebbles[i] = stone
+			if i < len(pebbles_buffer) {
+				pebbles_buffer[i] = stone
 				i++
 			} else {
-				pebbles = append(pebbles, stone)
+				pebbles_buffer = append(pebbles_buffer, stone)
 				i++
 			}
 		}
 	}
 	cancel()
 
-	fmt.Printf("P.1_len: %d\n", len(pebbles))
+	fmt.Printf("P.1_len: %d\n", len(pebbles_buffer))
 
 }
 
 func main() {
-	file_name := "test.txt"
+	file_name := "input.txt"
 	var start time.Time
 
 	f, err := os.Create("perf.prof")
