@@ -98,7 +98,12 @@ func bulk_process(stone int, count int, stone_attrs *StoneAttr, result chan map[
 		if len(children) == 1 {
 			result <- map[int]int{children[0]: count}
 		} else {
-			result <- map[int]int{children[0]: count, children[1]: count}
+			if children[0] == children[1] {
+				result <- map[int]int{children[0]: 2 * count}
+			} else {
+				result <- map[int]int{children[0]: count, children[1]: count}
+			}
+
 		}
 	}
 }
@@ -186,8 +191,8 @@ func part_len_cache(file_name string) {
 		go cache_updater(&stone_cache, updates_ch, ctx)
 		go pebbles_updater(&ret_buffer, processed_ch, &process_blocker, ctx)
 	}
-	
-	for blink := 0; blink < 25; blink++ {
+
+	for blink := 0; blink < 75; blink++ {
 		main_blocker.Add(1)
 		go func() {
 			for k, v := range pebble_counts.cache {
@@ -217,7 +222,7 @@ func part_len_cache(file_name string) {
 }
 
 func main() {
-	file_name := "test.txt"
+	file_name := "input.txt"
 	var start time.Time
 
 	f, err := os.Create("perf.prof")
