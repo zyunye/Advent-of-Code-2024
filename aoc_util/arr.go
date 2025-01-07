@@ -1,16 +1,33 @@
 package aoc
 
 func Inbounds[T any](pos Position, arr *[][]T) bool {
-	rows := len(*arr)
-	for r := 0; r < rows; r++ {
-		len_c := len((*arr)[r])
+	return !(pos.C < 0 || pos.R < 0 || pos.C >= len((*arr)[0]) || pos.R >= len(*arr))
+}
 
-		if len_c != rows {
-			panic("Inbounds: Array not square")
+func GetAdjPositions[T any](center Position, arr *[][]T) []Position {
+
+	ret := make([]Position, 0)
+
+	for _, adj_dir := range ADJACENTS {
+		adj_pos := center.Add(adj_dir)
+		if Inbounds(adj_pos, arr) {
+			ret = append(ret, adj_pos)
 		}
 	}
 
-	return !(pos.C < 0 || pos.R < 0 || pos.C >= len((*arr)[0]) || pos.R >= len(*arr))
+	return ret
+}
+
+func GetAdjVals[T any](center Position, arr *[][]T) []T {
+	adj_poses := GetAdjPositions(center, arr)
+	ret := make([]T, 0)
+
+	for _, pos := range adj_poses {
+		v := (*arr)[pos.R][pos.C]
+		ret = append(ret, v)
+	}
+
+	return ret
 }
 
 func Pop[T any](arr *[]T) T {

@@ -1,22 +1,27 @@
 package aoc
 
 type Position struct {
-	C int
 	R int
+	C int
 }
 
 func (p1 Position) Add(p2 Position) Position {
-	return Position{C: p1.C + p2.C, R: p1.R + p2.R}
+	return Position{R: p1.R + p2.R, C: p1.C + p2.C}
 }
 
 func (p1 Position) Equal(p2 Position) bool {
-	return p1.C == p2.C && p1.R == p2.R
+	return p1.R == p2.R && p1.C == p2.C
 }
 
-var UP = Position{0, -1}
-var DOWN = Position{0, 1}
-var LEFT = Position{-1, 0}
-var RIGHT = Position{1, 0}
+var UP = Position{C: 0, R: -1}
+var DOWN = Position{C: 0, R: 1}
+var LEFT = Position{C: -1, R: 0}
+var RIGHT = Position{C: 1, R: 0}
+
+var UL = Position{C: -1, R: -1}
+var UR = Position{C: 1, R: -1}
+var DR = Position{C: 1, R: 1}
+var DL = Position{C: -1, R: 1}
 
 var TURN_ORDER = [4]Position{
 	UP,
@@ -30,6 +35,17 @@ var TURN_MAP = map[Position]int{
 	RIGHT: 1,
 	DOWN:  2,
 	LEFT:  3,
+}
+
+var ADJACENTS = [8]Position{
+	UP,
+	UR,
+	RIGHT,
+	DR,
+	DOWN,
+	DL,
+	LEFT,
+	UL,
 }
 
 func Turn(cur_dir Position, dir Position) Position {
@@ -50,5 +66,6 @@ func Turn(cur_dir Position, dir Position) Position {
 		dir_ind = (dir_ind + 2) % 4
 		return TURN_ORDER[dir_ind]
 	}
-	return Position{-1, -1}
+	// TODO: This should return an error instead of UL
+	return Position{R: -1, C: -1}
 }
