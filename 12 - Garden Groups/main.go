@@ -159,6 +159,10 @@ func calc_perimeter(plot *Plot, farm *Farm) int {
 	return perimeter
 }
 
+func calc_sides(plot *Plot, farm *Farm) int {
+	return 1
+}
+
 func part1(file_name string) {
 	f := read_input(file_name)
 
@@ -180,12 +184,6 @@ func part1(file_name string) {
 			}
 		}
 	}
-
-	// for _, plot_list := range plots {
-	// 	for _, plot := range plot_list {
-	// 		fmt.Println(plot)
-	// 	}
-	// }
 
 	prices := make(map[string]int)
 	for _, plot_list := range plots {
@@ -212,6 +210,48 @@ func part1(file_name string) {
 }
 
 func part2(file_name string) {
+	f := read_input(file_name)
+
+	farm := Farm{f: f}
+	seen := make(map[Position]bool)
+	plots := make(map[string][]Plot)
+
+	for r, row := range farm.f {
+		for c, id := range row {
+
+			cur_pos := Position{R: r, C: c}
+
+			if seen[cur_pos] {
+				continue
+			} else {
+				new_plot := flood_fill(cur_pos, &farm, &seen)
+				plots[id] = append(plots[id], new_plot)
+
+			}
+		}
+	}
+
+	prices := make(map[string]int)
+	for _, plot_list := range plots {
+		for _, plot := range plot_list {
+			id := plot.id
+			core_area := plot.core_area
+			perimeter_area := plot.perimeter_area
+			sides := calc_sides(&plot, &farm)
+
+			fmt.Println(plot)
+			fmt.Println(sides)
+
+			prices[id] += (core_area + perimeter_area) * sides
+		}
+	}
+
+	total_price := 0
+	for _, v := range prices {
+		total_price += v
+	}
+
+	fmt.Printf("P.2: %d\n", total_price)
 }
 
 func main() {
