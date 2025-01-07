@@ -30,6 +30,54 @@ func GetAdjVals[T any](center Position, arr *[][]T) []T {
 	return ret
 }
 
+func GetOrthPositions[T any](center Position, arr *[][]T) []Position {
+
+	ret := make([]Position, 0)
+
+	for _, adj_dir := range TURN_ORDER {
+		adj_pos := center.Add(adj_dir)
+		if Inbounds(adj_pos, arr) {
+			ret = append(ret, adj_pos)
+		}
+	}
+
+	return ret
+}
+
+func GetOrthVals[T any](center Position, arr *[][]T) []T {
+	adj_poses := GetOrthPositions(center, arr)
+	ret := make([]T, 0)
+
+	for _, pos := range adj_poses {
+		v := (*arr)[pos.R][pos.C]
+		ret = append(ret, v)
+	}
+
+	return ret
+}
+
+func (pt Position) CalcAdjPositions() []Position {
+	ret := make([]Position, 0)
+
+	for _, adj_dir := range ADJACENTS {
+		adj_pos := pt.Add(adj_dir)
+		ret = append(ret, adj_pos)
+	}
+
+	return ret
+}
+
+func (pt Position) CalcOrthPositions() []Position {
+	ret := make([]Position, 0)
+
+	for _, adj_dir := range TURN_ORDER {
+		adj_pos := pt.Add(adj_dir)
+		ret = append(ret, adj_pos)
+	}
+
+	return ret
+}
+
 func Pop[T any](arr *[]T) T {
 	l := len(*arr)
 	ret := (*arr)[l-1]
