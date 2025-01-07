@@ -159,8 +159,41 @@ func calc_perimeter(plot *Plot, farm *Farm) int {
 	return perimeter
 }
 
+var Ls = [4][3]Position{
+	{UP, LEFT, UL},
+	{UP, RIGHT, UR},
+	{DOWN, RIGHT, DR},
+	{DOWN, LEFT, DL},
+}
+
 func calc_sides(plot *Plot, farm *Farm) int {
-	return 1
+	id := plot.id
+	all_pts := append(plot.perimeter, plot.points...)
+
+	corners := 0
+
+	for _, center_pt := range all_pts {
+		for _, l := range Ls {
+			orth_1, orth_2, diag := l[0], l[1], l[2]
+			orth_1_val, _ := farm.Get(center_pt.Add(orth_1))
+			orth_2_val, _ := farm.Get(center_pt.Add(orth_2))
+			diag_val, _ := farm.Get(center_pt.Add(diag))
+
+			o1_same := orth_1_val == id 
+			o2_same := orth_2_val == id 
+			diag_same := diag_val == id
+
+			if !o1_same && !o2_same {
+				corners += 1
+			}
+			if o1_same && o2_same && !diag_same {
+				corners += 1
+			}
+
+		}
+	}
+
+	return corners
 }
 
 func part1(file_name string) {
@@ -192,9 +225,6 @@ func part1(file_name string) {
 			core_area := plot.core_area
 			perimeter_area := plot.perimeter_area
 			perimeter := calc_perimeter(&plot, &farm)
-
-			fmt.Println(plot)
-			fmt.Println(perimeter)
 
 			prices[id] += (core_area + perimeter_area) * perimeter
 		}
