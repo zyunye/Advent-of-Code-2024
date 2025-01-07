@@ -219,5 +219,3 @@ func main() {
 	part1(file_name)
 	part2(file_name)
 }
-
-// Not 1378192
