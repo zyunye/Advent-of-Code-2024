@@ -30,7 +30,7 @@ B: %v
 Prize: %v`, m.A, m.B, m.Prize)
 }
 
-func read_input(file_name string) []Machine {
+func read_input(file_name string, is_pt_2 bool) []Machine {
 	file, err := os.Open(file_name)
 	CheckErr(err)
 
@@ -77,7 +77,12 @@ func read_input(file_name string) []Machine {
 
 		a_button := Button{X: float64(a_x), Y: float64(a_y)}
 		b_button := Button{X: float64(b_x), Y: float64(b_y)}
-		prize := Prize{X: float64(p_x), Y: float64(p_y)}
+		var prize Prize
+		if !is_pt_2 {
+			prize = Prize{X: float64(p_x), Y: float64(p_y)}
+		} else {
+			prize = Prize{X: float64(p_x + 10000000000000), Y: float64(p_y + 10000000000000)}
+		}
 		machine := Machine{A: a_button, B: b_button, Prize: prize}
 		ret = append(ret, machine)
 
@@ -104,7 +109,7 @@ func solve_equation(m Machine) (a_count, b_count float64) {
 }
 
 func part1(file_name string) {
-	machines := read_input(file_name)
+	machines := read_input(file_name, false)
 
 	tokens_required := 0
 	for _, m := range machines {
@@ -114,10 +119,22 @@ func part1(file_name string) {
 		}
 	}
 
-	fmt.Printf("P.1: %d", tokens_required)
+	fmt.Printf("P.1: %d\n", tokens_required)
 }
 
 func part2(file_name string) {
+	machines := read_input(file_name, true)
+
+	tokens_required := 0
+	for _, m := range machines {
+		a_count, b_count := solve_equation(m)
+		if a_count == math.Trunc(a_count) && b_count == math.Trunc(b_count) {
+			tokens_required += 3*int(a_count) + int(b_count)
+		}
+	}
+
+	fmt.Printf("P.2: %d\n", tokens_required)
+
 }
 func main() {
 	file_name := "input.txt"
