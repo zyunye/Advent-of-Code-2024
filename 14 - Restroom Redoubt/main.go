@@ -4,6 +4,7 @@ import (
 	. "aoc"
 	"bufio"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -97,19 +98,103 @@ func part1(file_name string) {
 		safety_factor *= v
 	}
 
-	fmt.Printf("P.1: %d", safety_factor)
-
+	fmt.Printf("P.1: %d\n", safety_factor)
 }
+
+func dump_bathroom(bathroom *[][]int, iter int) {
+	file, err := os.OpenFile("out.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	CheckErr(err)
+	defer file.Close()
+
+	writer := bufio.NewWriter(file)
+	writer.WriteString(fmt.Sprintf("Seconds: %d\n", iter))
+	for _, row := range *bathroom {
+		for _, col := range row {
+			val := strconv.Itoa(col)
+
+			if val == "0" {
+				_, err := writer.WriteString(".")
+				CheckErr(err)
+			} else {
+				_, err := writer.WriteString(val)
+				CheckErr(err)
+			}
+
+		}
+		writer.WriteString("\n")
+	}
+	writer.WriteString("\n")
+	err = writer.Flush()
+	CheckErr(err)
+}
+
 func part2(file_name string) {
 	robots := read_input(file_name)
 
 	bathroom_r := 103
 	bathroom_c := 101
-	iters := 100
 
 	mid_r := bathroom_r / 2
 	mid_c := bathroom_c / 2
 
+	safety_scores := make([]int, 0)
+
+	for i := 0; i < 100; i++ {
+
+		quadrants := make(map[string]int)
+		bathroom := make([][]int, bathroom_r)
+		for br_c := range bathroom {
+			bathroom[br_c] = make([]int, bathroom_c)
+		}
+
+		for _, robot := range robots {
+			end_pos := robot.start.Add(robot.velocity.Mult(i * bathroom_r))
+			end_pos.C = end_pos.C % bathroom_c
+			end_pos.R = end_pos.R % bathroom_r
+
+			if end_pos.C < 0 {
+				end_pos.C = bathroom_c + end_pos.C
+			}
+			if end_pos.R < 0 {
+				end_pos.R = bathroom_r + end_pos.R
+			}
+
+			if end_pos.R < mid_r && end_pos.C > mid_c {
+				quadrants["Q1"] += 1
+			} else if end_pos.R < mid_r && end_pos.C < mid_c {
+				quadrants["Q2"] += 1
+			} else if end_pos.R > mid_r && end_pos.C < mid_c {
+				quadrants["Q3"] += 1
+			} else if end_pos.R > mid_r && end_pos.C > mid_c {
+				quadrants["Q4"] += 1
+			}
+
+			bathroom[end_pos.R][end_pos.C] += 1
+
+		}
+
+		safety_factor := 1
+		for _, v := range quadrants {
+			safety_factor *= v
+		}
+		safety_scores = append(safety_scores, safety_factor)
+		// dump_bathroom(&bathroom, i)
+	}
+
+	smallest := math.MaxInt
+	search_start := -1
+
+	for i, score := range safety_scores {
+		if score < smallest {
+			smallest = score
+			search_start = i
+		}
+	}
+
+	
+
+	// fmt.Printf("P.2: %d\n", search_start)
+	// 2187 too low
 }
 func main() {
 	file_name := "input.txt"
