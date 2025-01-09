@@ -7,62 +7,6 @@ import (
 	"os"
 )
 
-// type Tile struct {
-// 	v string
-// 	p Position
-// }
-
-// func (t *Tile) String() string {
-// 	return t.v
-// }
-// func (t *Tile) Move(dir Position, warehouse *[][]Tile) bool {
-// 	neighbor_pos := t.p.Add(dir)
-// 	neighbor := (*warehouse)[neighbor_pos.R][neighbor_pos.C]
-
-// 	if neighbor.Shove(dir, warehouse) {
-// 		move_to := t.p.Add(dir)
-// 		(*warehouse)[t.p.R][t.p.C] = Tile{p: Position{R: t.p.R, C: t.p.C}, v: "."}
-// 		(*warehouse)[move_to.R][move_to.C] = *t
-// 		t.p = move_to
-// 		return true
-// 	}
-// 	return false
-// }
-
-// func (t *Tile) Shove(dir Position, warehouse *[][]Tile) bool {
-// 	if t.v == "#" {
-// 		return false
-// 	} else if t.v == "." {
-// 		return true
-// 	} else if t.v == "O" || t.v == "@" {
-// 		// neighbor_pos := t.p.Add(dir)
-// 		// if (*warehouse)[neighbor_pos.R][neighbor_pos.C].Shove(dir, warehouse) {
-// 		// move_to := t.p.Add(dir)
-// 		// (*warehouse)[t.p.R][t.p.C] = Tile{p: Position{R: t.p.R, C: t.p.C}, v: "."}
-// 		// (*warehouse)[move_to.R][move_to.C] = *t
-// 		// t.p = move_to
-// 		// return true
-// 		// 	return t.Move(dir, warehouse)
-// 		// }
-// 		// return false
-// 		return t.Move(dir, warehouse)
-// 	} else {
-// 		panic(fmt.Sprintf("Shove was called on a weird tile: %s, %v", t.v, t.p))
-// 	}
-// }
-
-// func print_warehouse(w *[][]Tile) {
-// 	var buffer bytes.Buffer
-
-// 	for _, row := range *w {
-// 		for _, col := range row {
-// 			buffer.WriteString(col.String())
-// 		}
-// 		buffer.WriteString("\n")
-// 	}
-// 	fmt.Println(buffer.String())
-// }
-
 func print_warehouse(w *[][]string) {
 	for _, row := range *w {
 		fmt.Println(row)
