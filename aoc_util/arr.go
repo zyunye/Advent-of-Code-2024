@@ -56,6 +56,10 @@ func GetOrthVals[T any](center Position, arr *[][]T) []T {
 	return ret
 }
 
+func Get[T any](pos Position, arr *[][]T) T {
+	return (*arr)[pos.R][pos.C]
+}
+
 func (pt Position) CalcAdjPositions() []Position {
 	ret := make([]Position, 0)
 
