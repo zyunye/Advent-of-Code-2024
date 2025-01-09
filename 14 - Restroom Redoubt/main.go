@@ -22,6 +22,26 @@ Velocity: %v
 `, r.start, r.velocity)
 }
 
+func (r *Robot) CalcEndPos(iters, max_r, max_c int) Position {
+	end_pos := r.start.Add(r.velocity.Mult(iters))
+	end_pos.C = end_pos.C % max_c
+	end_pos.R = end_pos.R % max_r
+
+	if end_pos.C < 0 {
+		end_pos.C = max_c + end_pos.C
+	}
+	if end_pos.R < 0 {
+		end_pos.R = max_r + end_pos.R
+	}
+
+	return end_pos
+}
+
+func (r *Robot) ModifyStartPos(iters, max_r, max_c int) {
+	end_pos := r.CalcEndPos(iters, max_r, max_c)
+	r.start = end_pos
+}
+
 func read_input(file_name string) []Robot {
 	file, err := os.Open(file_name)
 	CheckErr(err)
@@ -70,16 +90,7 @@ func part1(file_name string) {
 	quadrants := make(map[string]int)
 
 	for _, robot := range robots {
-		end_pos := robot.start.Add(robot.velocity.Mult(iters))
-		end_pos.C = end_pos.C % bathroom_c
-		end_pos.R = end_pos.R % bathroom_r
-
-		if end_pos.C < 0 {
-			end_pos.C = bathroom_c + end_pos.C
-		}
-		if end_pos.R < 0 {
-			end_pos.R = bathroom_r + end_pos.R
-		}
+		end_pos := robot.CalcEndPos(iters, bathroom_r, bathroom_c)
 
 		if end_pos.R < mid_r && end_pos.C > mid_c {
 			quadrants["Q1"] += 1
@@ -139,25 +150,13 @@ func part2(file_name string) {
 
 	safety_scores := make([]int, 0)
 
+	// Search for safest bathroom to use as a starting point
 	for i := 0; i < 100; i++ {
 
 		quadrants := make(map[string]int)
-		bathroom := make([][]int, bathroom_r)
-		for br_c := range bathroom {
-			bathroom[br_c] = make([]int, bathroom_c)
-		}
 
 		for _, robot := range robots {
-			end_pos := robot.start.Add(robot.velocity.Mult(i * bathroom_r))
-			end_pos.C = end_pos.C % bathroom_c
-			end_pos.R = end_pos.R % bathroom_r
-
-			if end_pos.C < 0 {
-				end_pos.C = bathroom_c + end_pos.C
-			}
-			if end_pos.R < 0 {
-				end_pos.R = bathroom_r + end_pos.R
-			}
+			end_pos := robot.CalcEndPos(i, bathroom_r, bathroom_c)
 
 			if end_pos.R < mid_r && end_pos.C > mid_c {
 				quadrants["Q1"] += 1
@@ -168,9 +167,6 @@ func part2(file_name string) {
 			} else if end_pos.R > mid_r && end_pos.C > mid_c {
 				quadrants["Q4"] += 1
 			}
-
-			bathroom[end_pos.R][end_pos.C] += 1
-
 		}
 
 		safety_factor := 1
@@ -178,24 +174,39 @@ func part2(file_name string) {
 			safety_factor *= v
 		}
 		safety_scores = append(safety_scores, safety_factor)
-		// dump_bathroom(&bathroom, i)
 	}
 
 	smallest := math.MaxInt
-	search_start := -1
+	SEARCH_START := -1
 
 	for i, score := range safety_scores {
 		if score < smallest {
 			smallest = score
-			search_start = i
+			SEARCH_START = i
 		}
 	}
 
-	
+	// Modify robots so they start on this cycle
+	for i, _ := range robots {
+		robots[i].ModifyStartPos(SEARCH_START, bathroom_r, bathroom_c)
+	}
 
-	// fmt.Printf("P.2: %d\n", search_start)
-	// 2187 too low
+	// Search multiples of bathroom column. (The starting image has vertical bands)
+	for i := 0; i < 100; i++ {
+		bathroom := make([][]int, bathroom_r)
+		for br_c := range bathroom {
+			bathroom[br_c] = make([]int, bathroom_c)
+		}
+
+		for _, robot := range robots {
+			end_pos := robot.CalcEndPos(i*bathroom_c, bathroom_r, bathroom_c)
+			bathroom[end_pos.R][end_pos.C] += 1
+		}
+
+		dump_bathroom(&bathroom, SEARCH_START + bathroom_c * i)
+	}
 }
+
 func main() {
 	file_name := "input.txt"
 	part1(file_name)
