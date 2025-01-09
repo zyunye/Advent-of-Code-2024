@@ -207,98 +207,85 @@ func move2(tile_pos Position, dir Position, warehouse *[][]string) (Position, bo
 			return tile_pos, false
 		}
 
-	} else if tile == "[" {
-		my_neighbor_pos := tile_pos.Add(dir)
-		partner_pos := tile_pos.Add(RIGHT)
+	} else if tile == "[" || tile == "]" {
+		var left_pos Position
+		var right_pos Position
+
+		if tile == "[" {
+			left_pos = tile_pos
+			right_pos = tile_pos.Add(RIGHT)
+		} else if tile == "]" {
+			left_pos = tile_pos.Add(LEFT)
+			right_pos = tile_pos
+		}
+
+		left_neighbor := left_pos.Add(dir)
+		right_neighbor := right_pos.Add(dir)
 
 		if dir == LEFT {
-			if _, my_move_ok := move2(my_neighbor_pos, dir, warehouse); my_move_ok {
-				swap1(my_neighbor_pos, tile_pos, warehouse)
-				swap1(tile_pos, partner_pos, warehouse)
-				return my_neighbor_pos, true
+			if _, move_ok := move2(left_neighbor, dir, warehouse); move_ok {
+				swap1(left_pos, left_neighbor, warehouse)
+				swap1(right_pos, right_neighbor, warehouse)
+				return left_neighbor, true
+			} else {
+				return tile_pos, false
 			}
-
 		} else if dir == RIGHT {
-			return move2(partner_pos, dir, warehouse)
-
-		} else {
-			my_lookahead := Get(tile_pos.Add(dir), warehouse)
-			partner_lookahead := Get(partner_pos.Add(dir), warehouse)
-
-			if my_lookahead == "." && partner_lookahead == "." {
-				me_towards := tile_pos.Add(dir)
-				partner_towards := partner_pos.Add(dir)
-				swap1(tile_pos, me_towards, warehouse)
-				swap1(partner_pos, partner_towards, warehouse)
-				return me_towards, true
-
-			} else if my_lookahead == "#" || partner_lookahead == "#" {
-				return tile_pos, false
-
+			if _, move_ok := move2(right_neighbor, dir, warehouse); move_ok {
+				swap1(right_pos, right_neighbor, warehouse)
+				swap1(left_pos, left_neighbor, warehouse)
+				return right_neighbor, true
 			} else {
-				_, my_move_ok := move2(my_neighbor_pos, dir, warehouse)
-				if !my_move_ok {
-					return tile_pos, false
-				}
-				_, partner_move_ok := move2(partner_pos, dir, warehouse)
-				if !partner_move_ok {
-					return tile_pos, false
-				}
-
-				me_towards := tile_pos.Add(dir)
-				partner_towards := partner_pos.Add(dir)
-				swap1(tile_pos, me_towards, warehouse)
-				swap1(partner_pos, partner_towards, warehouse)
-				return me_towards, true
+				return tile_pos, false
 			}
+		} else {
+			// Up Down movement
+			_check_seen := func(pos Position, arr *[]Position) bool {
+				for _, v := range *arr {
+					if pos == v {
+						return true
+					}
+				}
+				return false
+			}
+
+			required_moves := make([]Position, 0)
+
+			required_moves = append(required_moves, tile_pos)
+			head := 0
+
+			for head < len(required_moves) {
+				cur_pos := required_moves[head]
+				cur_val := Get(cur_pos, warehouse)
+
+				if cur_val == "#" {
+					return tile_pos, false
+				} else if cur_val == "[" {
+					if !_check_seen(cur_pos.Add(RIGHT), &required_moves) {
+						required_moves = append(required_moves, cur_pos.Add(RIGHT))
+					}
+					if !_check_seen(cur_pos.Add(dir), &required_moves) && Get(cur_pos.Add(dir), warehouse) != "." {
+						required_moves = append(required_moves, cur_pos.Add(dir))
+					}
+				} else if cur_val == "]" {
+					if !_check_seen(cur_pos.Add(LEFT), &required_moves) {
+						required_moves = append(required_moves, cur_pos.Add(LEFT))
+					}
+					if !_check_seen(cur_pos.Add(dir), &required_moves) && Get(cur_pos.Add(dir), warehouse) != "." {
+						required_moves = append(required_moves, cur_pos.Add(dir))
+					}
+				}
+				head += 1
+			}
+
+			for i := len(required_moves) - 1; i >= 0; i-- {
+				pos := required_moves[i]
+				swap1(pos, pos.Add(dir), warehouse)
+			}
+
+			return tile_pos, true
 		}
 
-	} else if tile == "]" {
-		my_neighbor_pos := tile_pos.Add(dir)
-		partner_pos := tile_pos.Add(LEFT)
-
-		if dir == RIGHT {
-			if _, my_move_ok := move2(my_neighbor_pos, dir, warehouse); my_move_ok {
-				swap1(my_neighbor_pos, tile_pos, warehouse)
-				swap1(tile_pos, partner_pos, warehouse)
-				return my_neighbor_pos, true
-			}
-
-		} else if dir == LEFT {
-			return move2(partner_pos, dir, warehouse)
-
-		} else {
-			my_lookahead := Get(tile_pos.Add(dir), warehouse)
-			partner_lookahead := Get(partner_pos.Add(dir), warehouse)
-
-			if my_lookahead == "." && partner_lookahead == "." {
-				me_towards := tile_pos.Add(dir)
-				partner_towards := partner_pos.Add(dir)
-				swap1(tile_pos, me_towards, warehouse)
-				swap1(partner_pos, partner_towards, warehouse)
-				return me_towards, true
-
-			} else if my_lookahead == "#" || partner_lookahead == "#" {
-				return tile_pos, false
-
-			} else {
-
-				_, my_move_ok := move2(my_neighbor_pos, dir, warehouse)
-				if !my_move_ok {
-					return tile_pos, false
-				}
-				_, partner_move_ok := move2(partner_pos, dir, warehouse)
-				if !partner_move_ok {
-					return tile_pos, false
-				}
-
-				me_towards := tile_pos.Add(dir)
-				partner_towards := partner_pos.Add(dir)
-				swap1(tile_pos, me_towards, warehouse)
-				swap1(partner_pos, partner_towards, warehouse)
-				return me_towards, true
-			}
-		}
 	} else {
 		panic(fmt.Sprintf("Move was called on a weird tile: %s, %v", tile, tile_pos))
 	}
@@ -307,19 +294,31 @@ func move2(tile_pos Position, dir Position, warehouse *[][]string) (Position, bo
 
 func part2(file_name string) {
 	warehouse, instructions, robot_pos := read_input_p2(file_name)
-	print_warehouse(&warehouse)
-	fmt.Println()
+	// print_warehouse(&warehouse)
+	// fmt.Println()
 
 	for _, instruction := range instructions {
-		print_instruction(instruction)
+		// fmt.Printf("%d ", i)
+		// print_instruction(instruction)
 		robot_pos, _ = move2(robot_pos, instruction, &warehouse)
-		print_warehouse(&warehouse)
-		fmt.Println()
+		// print_warehouse(&warehouse)
+		// fmt.Println()
 	}
+
+	gps_sum := 0
+	for r, row := range warehouse {
+		for c, col := range row {
+			if col == "[" {
+				gps_sum += 100*r + c
+			}
+		}
+	}
+
+	fmt.Printf("P.2: %d\n", gps_sum)
 
 }
 func main() {
-	file_name := "test2.txt"
+	file_name := "input.txt"
 	part1(file_name)
 	part2(file_name)
 }
