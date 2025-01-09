@@ -1,12 +1,21 @@
 package aoc
 
+import "fmt"
+
 type Position struct {
 	R int
 	C int
 }
 
+func (p Position) String() string {
+	return fmt.Sprintf(`{R:%d, C:%d}`, p.R, p.C)
+}
+
 func (p1 Position) Add(p2 Position) Position {
 	return Position{R: p1.R + p2.R, C: p1.C + p2.C}
+}
+func (p Position) Mult(coeff int) Position {
+	return Position{R: p.R * coeff, C: p.C * coeff}
 }
 
 func (p1 Position) Equal(p2 Position) bool {
