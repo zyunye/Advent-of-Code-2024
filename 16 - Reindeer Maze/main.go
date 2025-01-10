@@ -49,17 +49,10 @@ func print_maze_with_iter(pos Position, maze *[][]string) {
 	}
 }
 
-func print_full_path(end Position, path *map[Step]Step, maze *[][]string) {
-	var cur_step Step
-	for s, _ := range *path {
-		if s.pos.Equal(end) {
-			cur_step = s
-			break
-		}
-	}
-
+func print_full_path(end Position, path *map[Position]Step, maze *[][]string) {
+	cur_pos := end
 	for {
-		from, ok := (*path)[cur_step]
+		from, ok := (*path)[cur_pos]
 		if !ok {
 			break
 		}
@@ -76,9 +69,8 @@ func print_full_path(end Position, path *map[Step]Step, maze *[][]string) {
 			(*maze)[pos.R][pos.C] = "<"
 		}
 
-		cur_step = from
+		cur_pos = from.pos
 	}
-
 	print_maze(maze)
 }
 
@@ -95,18 +87,17 @@ func cost(cur_pos Position, next_pos Position, cur_facing Position) int {
 }
 
 func heuristic(cur_pos, goal Position) float64 {
-	// return math.Abs(float64(cur_pos.R)-float64(goal.R)) + math.Abs(float64(cur_pos.C)-float64(goal.C))
-	return math.Sqrt(math.Pow(float64(cur_pos.R)-float64(goal.R), 2) + math.Pow(float64(cur_pos.C)-float64(goal.C), 2))
+	return math.Abs(float64(cur_pos.R)-float64(goal.R)) + math.Abs(float64(cur_pos.C)-float64(goal.C))
 }
 
-func a_star(start Position, end Position, maze *[][]string) (map[Step]Step, map[Position]float64) {
+func a_star(start Position, end Position, maze *[][]string) (map[Position]Step, map[Position]float64) {
 
 	start_step := Step{pos: start, dir: RIGHT, priority: 0}
 
 	frontier := &PriorityQueue{
 		&start_step,
 	}
-	came_from := make(map[Step]Step)
+	came_from := make(map[Position]Step)
 	cost_so_far := make(map[Position]float64)
 
 	cost_so_far[start] = 0
@@ -118,9 +109,9 @@ func a_star(start Position, end Position, maze *[][]string) (map[Step]Step, map[
 
 		// print_maze_with_iter(cur_pos, maze)
 
-		// if cur_pos.Equal(end) {
-		// 	break
-		// }
+		if cur_pos.Equal(end) {
+			continue
+		}
 
 		valid_moves := map[Position]Position{
 			Turn(cur_facing, LEFT):  cur_pos.Add(Turn(cur_facing, LEFT)),  //left
@@ -142,12 +133,12 @@ func a_star(start Position, end Position, maze *[][]string) (map[Step]Step, map[
 			prev_cost, seen := cost_so_far[move]
 			if !seen || new_cost < prev_cost {
 				cost_so_far[move] = new_cost
-				priority := heuristic(move, end)
+				priority := new_cost + heuristic(cur_pos, end)
 
 				next := Step{pos: move, dir: facing, priority: priority}
 
 				heap.Push(frontier, &next)
-				came_from[next] = *current
+				came_from[move] = *current
 			}
 		}
 	}
@@ -159,15 +150,12 @@ func part1(file_name string) {
 
 	start := Position{R: len(maze) - 2, C: 1}
 	end := Position{R: 1, C: len(maze[0]) - 2}
-	print_maze(&maze)
+	// print_maze(&maze)
 
 	path, costs := a_star(start, end, &maze)
 
-	fmt.Println(len(path))
-
-	fmt.Printf("P.1: %f\n", costs[end])
-	//83468 too low
 	print_full_path(end, &path, &maze)
+	fmt.Printf("P.1: %f\n", costs[end])
 
 }
 
@@ -175,7 +163,7 @@ func part2(file_name string) {
 }
 
 func main() {
-	file_name := "test.txt"
+	file_name := "input.txt"
 	part1(file_name)
 	part2(file_name)
 }
