@@ -82,3 +82,16 @@ func Turn(cur_dir Position, dir Position) Position {
 	// TODO: This should return an error instead of UL
 	panic("Bad input given to Turn")
 }
+
+func DirStr(dir Position) string {
+	if dir == UP {
+		return "^"
+	} else if dir == RIGHT {
+		return ">"
+	} else if dir == DOWN {
+		return "v"
+	} else if dir == LEFT {
+		return "<"
+	}
+	return ""
+}
