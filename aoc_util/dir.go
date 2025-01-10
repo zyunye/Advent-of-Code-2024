@@ -14,6 +14,10 @@ func (p Position) String() string {
 func (p1 Position) Add(p2 Position) Position {
 	return Position{R: p1.R + p2.R, C: p1.C + p2.C}
 }
+func (p1 Position) Subtract(p2 Position) Position {
+	return Position{R: p1.R - p2.R, C: p1.C - p2.C}
+}
+
 func (p Position) Mult(coeff int) Position {
 	return Position{R: p.R * coeff, C: p.C * coeff}
 }
@@ -76,5 +80,5 @@ func Turn(cur_dir Position, dir Position) Position {
 		return TURN_ORDER[dir_ind]
 	}
 	// TODO: This should return an error instead of UL
-	return Position{R: -1, C: -1}
+	panic("Bad input given to Turn")
 }
