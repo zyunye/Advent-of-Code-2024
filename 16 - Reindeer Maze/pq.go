@@ -4,13 +4,13 @@ import (
 	. "aoc"
 )
 
-type Step struct {
+type PriorityStep struct {
 	pos      Position
 	dir      Position
 	priority float64
 }
 
-type PriorityQueue []*Step
+type PriorityQueue []*PriorityStep
 
 func (pq PriorityQueue) Len() int {
 	return len(pq)
@@ -25,7 +25,7 @@ func (pq PriorityQueue) Swap(i, j int) {
 }
 
 func (pq *PriorityQueue) Push(item interface{}) {
-	*pq = append(*pq, item.(*Step))
+	*pq = append(*pq, item.(*PriorityStep))
 }
 
 func (pq *PriorityQueue) Pop() interface{} {
