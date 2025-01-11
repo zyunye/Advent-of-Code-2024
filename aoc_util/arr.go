@@ -98,6 +98,15 @@ func Remove[T any](i int, arr *[]T) T {
 	return ret
 }
 
+func RemoveNoRef[T any](i int, arr []T) ([]T, T ){
+	if i < 0 || i >= len(arr) {
+		panic("Remove: Index out of bounds")
+	}
+	ret := arr[i]
+	arr = append(arr[:i], arr[i+1:]...)
+	return arr, ret
+}
+
 func Insert[T any](i int, v T, arr *[]T) {
 	if i < 0 {
 		panic("Remove: Index out of bounds")

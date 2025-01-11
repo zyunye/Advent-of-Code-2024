@@ -3,3 +3,4 @@
 test*.txt
 input.txt
 ignore
+.vscode
