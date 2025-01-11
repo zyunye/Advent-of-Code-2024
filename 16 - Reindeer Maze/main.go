@@ -38,44 +38,11 @@ func heuristic(cur_pos, goal Position) float64 {
 func get_adj_costs(pos Position, facing Position, maze *[][]string) []CostStep {
 	ret := make([]CostStep, 0)
 
-	// left_turn := Turn(facing, LEFT)
-	// left := pos.Add(left_turn)
-	// if Get(left, maze) != "#" {
-	// 	ret = append(ret, CostStep{
-	// 		Step: Step{dir: left_turn, pos: left},
-	// 		cost: 1001,
-	// 	})
-	// }
-
-	// forward := pos.Add(facing)
-	// if Get(forward, maze) != "#" {
-	// 	ret = append(ret, CostStep{
-	// 		Step: Step{dir: facing, pos: forward},
-	// 		cost: 1,
-	// 	})
-	// }
-
-	// right_turn := Turn(facing, RIGHT)
-	// right := pos.Add(right_turn)
-	// if Get(right, maze) != "#" {
-	// 	ret = append(ret, CostStep{
-	// 		Step: Step{dir: right_turn, pos: right},
-	// 		cost: 1001,
-	// 	})
-	// }
-
 	left_turn := Turn(facing, LEFT)
 	ret = append(ret, CostStep{
 		Step: Step{dir: left_turn, pos: pos},
 		cost: 1000,
 	})
-	// left := pos.Add(left_turn)
-	// if Get(left, maze) != "#" {
-	// 	ret = append(ret, CostStep{
-	// 		Step: Step{dir: left_turn, pos: left},
-	// 		cost: 1001,
-	// 	})
-	// }
 
 	forward := pos.Add(facing)
 	if Get(forward, maze) != "#" {
@@ -152,12 +119,6 @@ func a_star(start Position, end Position, maze *[][]string) (map[Step][]CostStep
 
 	}
 	return came_from, cost_so_far
-}
-
-func print_came_from(came_from *map[Position][]CostStep, pos Position) {
-	for _, p := range (*came_from)[pos] {
-		fmt.Println(p)
-	}
 }
 
 func trace_back(end Position, came_from *map[Step][]CostStep, cost_so_far *map[Step]float64, maze *[][]string) {
