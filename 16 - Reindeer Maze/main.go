@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"sort"
 	"strconv"
 )
 
@@ -61,11 +60,11 @@ func get_adj_costs(pos Position, facing Position, maze *[][]string) []CostStep {
 	return ret
 }
 
-func a_star(start Position, end Position, maze *[][]string) (map[Step][]CostStep, map[Step]float64) {
+func a_star(start Position, end Position, maze *[][]string) (map[Step][]Step, map[Step]float64) {
 	frontier := make(PriorityQueue, 0)
 	frontier.Push(PriorityStep{Step: Step{pos: start, dir: RIGHT}, priority: 0})
 
-	came_from := make(map[Step][]CostStep)
+	came_from := make(map[Step][]Step)
 	cost_so_far := make(map[Step]float64)
 
 	for len(frontier) > 0 {
@@ -100,20 +99,10 @@ func a_star(start Position, end Position, maze *[][]string) (map[Step][]CostStep
 				priority := new_cost + heuristic(adj.pos, end)
 				heap.Push(&frontier, PriorityStep{Step: adj.Step, priority: priority})
 
-				came_from[adj.Step] = make([]CostStep, 0)
-				came_from[adj.Step] = append(came_from[adj.Step], CostStep{Step: current.Step, cost: cost_so_far[current.Step]})
+				came_from[adj.Step] = make([]Step, 0)
+				came_from[adj.Step] = append(came_from[adj.Step], current.Step)
 			} else if new_cost <= csf {
-				new_path := CostStep{Step: current.Step, cost: cost_so_far[current.Step]}
-
-				// i := 0
-				// for i < len(came_from[adj.Step]) {
-				// 	if came_from[adj.Step][i].cost > new_path.cost {
-				// 		came_from[adj.Step], _ = RemoveNoRef(i, came_from[adj.Step])
-				// 	} else {
-				// 		i++
-				// 	}
-				// }
-				came_from[adj.Step] = append(came_from[adj.Step], new_path)
+				came_from[adj.Step] = append(came_from[adj.Step], current.Step)
 			}
 		}
 
@@ -121,54 +110,42 @@ func a_star(start Position, end Position, maze *[][]string) (map[Step][]CostStep
 	return came_from, cost_so_far
 }
 
-func trace_back(end Position, came_from *map[Step][]CostStep, cost_so_far *map[Step]float64, maze *[][]string) {
+func trace_back(end Position, came_from *map[Step][]Step, maze *[][]string) {
 
-	end_paths := make([]CostStep, 0)
-	for s, froms := range *came_from {
-		if s.pos.Equal(end) {
-			end_paths = append(end_paths, froms...)
-		}
-	}
-	sort.Slice(end_paths, func(i, j int) bool {
-		return end_paths[i].cost < end_paths[j].cost
-	})
+	e_step := Step{pos: end, dir: RIGHT}
 
-	parentage := make([]Position, 0)
-	parentage = append(parentage, end_paths[0].pos)
+	parentage := make([]Step, 0)
+	parentage = append(parentage, e_step)
 
-	best_nodes := make(map[Position]bool)
-	best_nodes[end] = true
+	best_nodes := make(map[Step]bool)
+	best_nodes[e_step] = true
 
 	for len(parentage) > 0 {
 		current_pos := Pop(&parentage)
 
-		for step, froms := range *came_from {
-			if step.pos.Equal(current_pos) {
-				for _, cs := range froms {
+		for _, from := range (*came_from)[current_pos] {
+			if _, ok := best_nodes[from]; !ok {
+				best_nodes[from] = true
+				parentage = append(parentage, from)
 
-					if _, ok := best_nodes[cs.pos]; !ok {
-						parentage = append(parentage, cs.pos)
-						best_nodes[cs.pos] = true
-					}
-
-					r, c := cs.pos.R, cs.pos.C
-					times_treaded, err := strconv.Atoi((*maze)[r][c])
-					if err != nil {
-						(*maze)[r][c] = "1"
-					} else {
-						(*maze)[r][c] = strconv.Itoa(times_treaded + 1)
-					}
-
-					print_maze_file(maze, "out.txt")
-					
+				r, c := from.pos.R, from.pos.C
+				times_treaded, err := strconv.Atoi((*maze)[r][c])
+				if err != nil {
+					(*maze)[r][c] = "1"
+				} else {
+					(*maze)[r][c] = strconv.Itoa(times_treaded + 1)
 				}
-				fmt.Println()
+				// print_maze_file(maze, "out.txt")
 			}
-			
 		}
 	}
 
-	fmt.Println(len(best_nodes))
+	unique_visited := make(map[Position]bool)
+	for s := range best_nodes {
+		unique_visited[s.pos] = true
+	}
+
+	fmt.Println(len(unique_visited))
 }
 
 func part1(file_name string) {
@@ -178,35 +155,13 @@ func part1(file_name string) {
 	end := Position{R: 1, C: len(maze[0]) - 2}
 	print_maze(&maze)
 
-	// came_from, cost_so_far := a_star(start, end, &maze)
-	came_from, cost_so_far := a_star(start, end, &maze)
-	// fmt.Printf("P.1: %f\n", cost_so_far[end])
-	// print_came_from(&came_from, Position{R: 7, C: 5})
-	// print_came_from(&came_from, Position{R: 7, C: 4})
-	// print_came_from(&came_from, Position{R: 7, C: 3})
+	came_from, _ := a_star(start, end, &maze)
 
-	// print_came_from(&came_from, Position{R: 8, C: 5})
-	// print_came_from(&came_from, Position{R: 9, C: 5})
+	trace_back(end, &came_from, &maze)
 
-	trace_back(end, &came_from, &cost_so_far, &maze)
-
-	for step, cost := range cost_so_far {
-		// if step.pos.Equal(Position{R: 7, C: 5}) {
-		if step.pos.Equal(end) {
-			fmt.Println(step, cost)
-			fmt.Println(came_from[step])
-			fmt.Println()
-		}
-	}
-
-}
-
-func part2(file_name string) {
-	// 819 too high
 }
 
 func main() {
 	file_name := "input.txt"
 	part1(file_name)
-	part2(file_name)
 }
