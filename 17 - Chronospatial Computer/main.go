@@ -4,8 +4,8 @@ import (
 	. "aoc"
 	"bufio"
 	"fmt"
-	"math"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -91,15 +91,14 @@ func fsm(computer *Computer) []int {
 		if opcode == 0 { // adv
 			combo := combo_operand(computer, operand)
 			numerator := computer.a
-			denominator := math.Pow(2, float64(combo))
-			computer.a = int(numerator / int(denominator))
+			computer.a = numerator >> combo
 
 		} else if opcode == 1 { // bxl
 			computer.b = computer.b ^ operand
 
 		} else if opcode == 2 { // bst
 			combo := combo_operand(computer, operand)
-			computer.b = combo % 8
+			computer.b = combo & 7
 
 		} else if opcode == 3 { // jnz
 			if computer.a != 0 {
@@ -117,14 +116,12 @@ func fsm(computer *Computer) []int {
 		} else if opcode == 6 { // bdv
 			combo := combo_operand(computer, operand)
 			numerator := computer.a
-			denominator := math.Pow(2, float64(combo))
-			computer.b = int(numerator / int(denominator))
+			computer.b = numerator >> combo
 
 		} else if opcode == 7 { // cdv
 			combo := combo_operand(computer, operand)
 			numerator := computer.a
-			denominator := math.Pow(2, float64(combo))
-			computer.c = int(numerator / int(denominator))
+			computer.c = numerator >> combo
 		}
 		ptr += 2
 	}
@@ -135,19 +132,96 @@ func fsm(computer *Computer) []int {
 func part1(file_name string) {
 	computer := read_input(file_name)
 	fmt.Println(computer)
-	res := fsm(&computer)
-	computer_out(res)
+	ret := fsm(&computer)
+	fmt.Printf("P.1: %v", ret)
+}
+
+func decompiled(a int) (a_next int, res int) {
+	b := a & 7 // 2,4
+
+	b = b ^ 3 // 1,3
+
+	c := a >> b // 7,5
+
+	a = a >> 3 // 0,3
+
+	b = b ^ 4 // 1,4
+
+	b = b ^ c // 4,_
+
+	res = b & 7 // 5,5
+
+	return a, res // 3, 0
 
 }
 
-func computer_out(results []int) {
-	for _, v := range results {
-		fmt.Printf("%d,", v)
+func part2(file_name string) {
+	computer := read_input(file_name)
+
+	type ss struct {
+		i int
+		a int
 	}
-	fmt.Println()
+
+	search_stack := []ss{
+		{i: len(computer.program), a: 0},
+	}
+	valid_a_vals := make([]int, 0)
+
+	for len(search_stack) > 0 {
+		st := Pop(&search_stack)
+		cur_ind, cur_a := st.i, st.a
+
+		if cur_ind == 0 {
+			valid_a_vals = append(valid_a_vals, cur_a)
+			continue
+		}
+
+		next_ind := cur_ind - 1
+		actual_instr := computer.program[next_ind]
+
+		for i := 0; i < 8; i++ {
+			next_a := (cur_a << 3) | i
+			a_ret, instr_ret := decompiled(next_a)
+
+			if a_ret == cur_a && instr_ret == actual_instr {
+				search_stack = append(search_stack, ss{i: next_ind, a: next_a})
+			}
+		}
+	}
+
+	sort.Ints(valid_a_vals)
+
+	for _, v := range valid_a_vals {
+		fmt.Println(v, fsm(&Computer{a: v, b: 0, c: 0, program: computer.program}))
+	}
 }
 
 func main() {
-	file_name := "test.txt"
+	file_name := "input.txt"
 	part1(file_name)
+	part2(file_name)
 }
+
+// input program len == 16
+
+// 64 to end of 1st 0
+// 512 to end of 2nd 0
+// 4096 to end of 3rd zero
+// 0 enders cycle every 3rd power of 2
+
+// This also means program length increases by 1 every cycle
+// for a program length of 16, we need 16 cycles to pass
+// this means 2^48 for our range?
+
+//i need to search from [2^45 to 2^48)
+// final number changes every 2^42 iterations
+
+// every index of the program changes ever 2^(i*3) where i is its index iterations
+// for example, the 1st index will swap every iteration i=0
+// the 2nd index changes every 2^3 = 8 iterations i=1
+// the 3rd index changes every 2^6 = 64 iterations i=2
+
+// 0 = start:0	 		cycles:1024=2^10 	repeats:2^0
+// 1 = start:2^(3*1)	cycles:1024=2^10	repeats:2^(3*1)
+// 2 = start:2^(3^2)	cycles:1024=2^10	repeats:2^(3^2)
