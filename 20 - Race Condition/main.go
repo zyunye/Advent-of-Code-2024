@@ -92,43 +92,66 @@ func part2(file_name string) {
 		jumps_in_range := get_valid_points_within_boundary(cur_pos, radius, &maze)
 
 		for _, jump := range jumps_in_range {
-			cur_cost := orig_costs[cur_pos]
-			end_cost := orig_costs[end]
-			jump_cost := orig_costs[jump]
+			if maze[jump.R][jump.C] == "#" {
+				// remaining_ps := radius - manhattan_dist(cur_pos, jump)
+				// if remaining_ps == 0 {
+				// 	continue
+				// }
 
-			new_cost := cur_cost + float64(end_cost-jump_cost)
+				// after_jump_points := get_valid_points_within_boundary(jump, remaining_ps, &maze)
+				// escape_routes := make([]Position, 0)
+				// for _, jump_neighbor := range after_jump_points {
+				// 	if maze[jump_neighbor.R][jump_neighbor.C] == "." || maze[jump_neighbor.R][jump_neighbor.C] == "E" {
+				// 		escape_routes = append(escape_routes, jump_neighbor)
+				// 	}
+				// }
+				// if len(escape_routes) == 0 {
+				// 	continue
+				// }
 
-			if new_cost < end_cost-cur_cost {
-				saved_cost := end_cost - new_cost
+				// for _, escape_pos := range escape_routes {
+				// 	cur_cost := orig_costs[cur_pos]
+				// 	end_cost := orig_costs[end]
+				// 	// jump_cost := orig_costs[jump]
+				// 	escape_cost := orig_costs[escape_pos]
 
-				cheats[int(saved_cost)] += 1
+				// 	cur_to_jump_dist := manhattan_dist(cur_pos, jump)
+				// 	// jump_to_end_cost := end_cost - jump_cost
+				// 	cur_to_end_cost := end_cost - cur_cost
+				// 	jump_to_escape_dist := manhattan_dist(jump, escape_pos)
+				// 	escape_to_end_cost := end_cost - escape_cost
+
+				// 	new_cost := cur_cost + float64(cur_to_jump_dist) + float64(jump_to_escape_dist) + escape_to_end_cost
+				// 	if new_cost < cur_to_end_cost {
+				// 		saved_cost := cur_to_end_cost - new_cost - cur_cost
+				// 		cheats[int(saved_cost)] += 1
+				// 	}
+				// }
+
+			} else {
+				if orig_costs[jump] < orig_costs[cur_pos] {
+					continue
+				}
+				if is_straight_line_unimpeded(cur_pos, jump, &maze) {
+					continue
+				}
+
+				cur_cost := orig_costs[cur_pos]
+				end_cost := orig_costs[end]
+				jump_cost := orig_costs[jump]
+
+				cur_to_jump_dist := manhattan_dist(cur_pos, jump)
+				jump_to_end_cost := end_cost - jump_cost
+				cur_to_end_cost := end_cost - cur_cost
+
+				new_cost := cur_cost + float64(cur_to_jump_dist) + jump_to_end_cost
+
+				if new_cost < cur_to_end_cost {
+					saved_cost := cur_to_end_cost - new_cost - cur_cost
+					cheats[int(saved_cost)] += 1
+				}
 			}
-
-			// if jump.Equal(end) {
-
-			// 	cur_cost := orig_costs[cur_pos]
-			// 	new_cost := cur_cost + float64(manhattan_dist(cur_pos, end))
-
-			// 	saved_cost := orig_costs[end] - new_cost
-			// 	cheats[int(saved_cost)] += 1
-			// } else {
-			// cost_remaining_after_jump := orig_costs[end] - orig_costs[jump]
-			// if cost_remaining_after_jump < orig_costs[cur_pos] {
-			// 	saved_cost := orig_costs[jump] - orig_costs[cur_pos]
-			// 	cheats[int(saved_cost)] += 1
-			// }
-			// }
 		}
-
-		// dist_to_end := manhattan_dist(cur_pos, end)
-
-		// if dist_to_end <= radius {
-		// 	cur_cost := orig_costs[cur_pos]
-		// 	new_cost := cur_cost + float64(dist_to_end)
-
-		// 	saved_cost := orig_costs[end] - new_cost
-		// 	cheats[int(saved_cost)] += 1
-		// }
 
 		neighbors := GetOrthPositions(cur_pos, &maze)
 		for _, neighbor := range neighbors {

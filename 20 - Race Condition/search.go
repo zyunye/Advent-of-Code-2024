@@ -160,12 +160,46 @@ func get_valid_points_within_boundary(pos Position, radius int, maze *[][]string
 		for dr := -dr_max; dr <= dr_max; dr++ {
 
 			check_pos := Position{R: r + dr, C: c + dc}
-			if (*maze)[check_pos.R][check_pos.C] == "." {
+			if Inbounds(check_pos, maze) {
 				ret = append(ret, Position{R: r + dr, C: c + dc})
+				// if (*maze)[check_pos.R][check_pos.C] == "." {
+				// 	ret = append(ret, Position{R: r + dr, C: c + dc})
+				// } else {
+				// 	pos_to_jump := manhattan_dist(pos, check_pos)
+				// 	jump_to_end := manhattan_dist(check_pos, end)
+				// 	if pos_to_jump+jump_to_end <= 20 {
+				// 		ret = append(ret, Position{R: r + dr, C: c + dc})
+				// 	}
+				// }
 			}
 
 		}
 	}
 
 	return ret
+}
+
+func is_straight_line_unimpeded(start Position, end Position, maze *[][]string) bool {
+	if start.R == end.R {
+		min_c := min(start.C, end.C)
+		max_c := max(start.C, end.C)
+		for min_c < max_c {
+			if (*maze)[start.R][min_c] == "#" {
+				return false
+			}
+			min_c++
+		}
+		return true
+	} else if start.C == end.C {
+		min_r := min(start.R, end.R)
+		max_r := max(start.R, end.R)
+		for min_r < max_r {
+			if (*maze)[min_r][start.C] == "#" {
+				return false
+			}
+			min_r++
+		}
+		return true
+	}
+	return false
 }
