@@ -7,7 +7,7 @@ import (
 )
 
 func heuristic(cur_pos, goal Position) float64 {
-	return math.Abs(float64(cur_pos.R)-float64(goal.R)) + math.Abs(float64(cur_pos.C)-float64(goal.C))
+	return float64(manhattan_dist(cur_pos, goal))
 }
 
 func get_adj_costs(pos Position, maze *[][]string) []PriorityStep {
@@ -22,6 +22,10 @@ func get_adj_costs(pos Position, maze *[][]string) []PriorityStep {
 	}
 
 	return ret
+}
+
+func manhattan_dist(start Position, end Position) int {
+	return int(math.Abs(float64(start.R)-float64(end.R))) + int(math.Abs(float64(start.C)-float64(end.C)))
 }
 
 func a_star(start Position, end Position, maze *[][]string) (map[Position]Position, map[Position]float64) {
@@ -104,4 +108,64 @@ func traceback(end Position, came_from *map[Position]Position, maze *[][]string)
 		stack = append(stack, parent)
 	}
 	return maze_copy, walls_to_check
+}
+
+func get_manhattan_boundary(pos Position, radius int) []Position {
+
+	ret := make([]Position, 0)
+
+	r := pos.R
+	c := pos.C
+
+	for dc := -radius; dc <= radius; dc++ {
+		dr := radius - Abs(dc)
+
+		ret = append(ret, Position{R: r + dr, C: c + dc})
+		if dr != 0 {
+			ret = append(ret, Position{R: r - dr, C: c + dc})
+		}
+	}
+
+	return ret
+}
+
+func get_manhattan_boundary_filled(pos Position, radius int) []Position {
+
+	ret := make([]Position, 0)
+
+	r := pos.R
+	c := pos.C
+
+	for dc := -radius; dc <= radius; dc++ {
+		dr_max := radius - Abs(dc)
+
+		for dr := -dr_max; dr <= dr_max; dr++ {
+			ret = append(ret, Position{R: r + dr, C: c + dc})
+		}
+	}
+
+	return ret
+}
+
+func get_valid_points_within_boundary(pos Position, radius int, maze *[][]string) []Position {
+
+	ret := make([]Position, 0)
+
+	r := pos.R
+	c := pos.C
+
+	for dc := -radius; dc <= radius; dc++ {
+		dr_max := radius - Abs(dc)
+
+		for dr := -dr_max; dr <= dr_max; dr++ {
+
+			check_pos := Position{R: r + dr, C: c + dc}
+			if (*maze)[check_pos.R][check_pos.C] == "." {
+				ret = append(ret, Position{R: r + dr, C: c + dc})
+			}
+
+		}
+	}
+
+	return ret
 }

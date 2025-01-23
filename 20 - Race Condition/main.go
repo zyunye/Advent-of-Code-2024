@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"sort"
 )
 
 func read_input(file_name string) ([][]string, Position, Position) {
@@ -72,15 +73,97 @@ func part1(file_name string) {
 
 func part2(file_name string) {
 	maze, start, end := read_input(file_name)
-	_, cost_so_far := a_star(start, end, &maze)
+	orig_lineage, orig_costs := a_star(start, end, &maze)
+	_ = orig_lineage
+	_ = orig_costs
 
-	orig_cost := cost_so_far[end]
-	fmt.Println(orig_cost)
+	search_stack := make([]Position, 0)
+	search_stack = append(search_stack, start)
+	seen := make(map[Position]bool)
 
-	came_from, cost_so_far2 := a_star2(start, end, &maze)
+	radius := 20
 
-	_ = came_from
-	_ = cost_so_far2
+	cheats := make(map[int]int)
+
+	for len(search_stack) > 0 {
+		cur_pos := Pop(&search_stack)
+		seen[cur_pos] = true
+
+		jumps_in_range := get_valid_points_within_boundary(cur_pos, radius, &maze)
+
+		for _, jump := range jumps_in_range {
+			cur_cost := orig_costs[cur_pos]
+			end_cost := orig_costs[end]
+			jump_cost := orig_costs[jump]
+
+			new_cost := cur_cost + float64(end_cost-jump_cost)
+
+			if new_cost < end_cost-cur_cost {
+				saved_cost := end_cost - new_cost
+
+				cheats[int(saved_cost)] += 1
+			}
+
+			// if jump.Equal(end) {
+
+			// 	cur_cost := orig_costs[cur_pos]
+			// 	new_cost := cur_cost + float64(manhattan_dist(cur_pos, end))
+
+			// 	saved_cost := orig_costs[end] - new_cost
+			// 	cheats[int(saved_cost)] += 1
+			// } else {
+			// cost_remaining_after_jump := orig_costs[end] - orig_costs[jump]
+			// if cost_remaining_after_jump < orig_costs[cur_pos] {
+			// 	saved_cost := orig_costs[jump] - orig_costs[cur_pos]
+			// 	cheats[int(saved_cost)] += 1
+			// }
+			// }
+		}
+
+		// dist_to_end := manhattan_dist(cur_pos, end)
+
+		// if dist_to_end <= radius {
+		// 	cur_cost := orig_costs[cur_pos]
+		// 	new_cost := cur_cost + float64(dist_to_end)
+
+		// 	saved_cost := orig_costs[end] - new_cost
+		// 	cheats[int(saved_cost)] += 1
+		// }
+
+		neighbors := GetOrthPositions(cur_pos, &maze)
+		for _, neighbor := range neighbors {
+			if maze[neighbor.R][neighbor.C] == "." {
+				if _, ok := seen[neighbor]; !ok {
+					search_stack = append(search_stack, neighbor)
+				}
+
+			}
+		}
+	}
+
+	func(m map[int]int) {
+		type kv struct {
+			Key   int
+			Value int
+		}
+
+		var kvPairs []kv
+		for key, value := range m {
+			kvPairs = append(kvPairs, kv{Key: key, Value: value})
+		}
+
+		sort.Slice(kvPairs, func(i, j int) bool {
+			return kvPairs[i].Key < kvPairs[j].Key
+		})
+
+		total_cheats := 0
+		for _, pair := range kvPairs {
+			fmt.Printf("%d cheats saved %d ps\n", pair.Value, pair.Key)
+			total_cheats += pair.Value
+		}
+		fmt.Println(total_cheats)
+
+	}(cheats)
 
 }
 

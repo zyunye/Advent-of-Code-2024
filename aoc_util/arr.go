@@ -98,7 +98,7 @@ func Remove[T any](i int, arr *[]T) T {
 	return ret
 }
 
-func RemoveNoRef[T any](i int, arr []T) ([]T, T ){
+func RemoveNoRef[T any](i int, arr []T) ([]T, T) {
 	if i < 0 || i >= len(arr) {
 		panic("Remove: Index out of bounds")
 	}
@@ -115,4 +115,13 @@ func Insert[T any](i int, v T, arr *[]T) {
 	} else {
 		*arr = append((*arr)[:i], append([]T{v}, (*arr)[i:]...)...)
 	}
+}
+
+func Copy2DArr[T any](arr *[][]T) [][]T {
+	maze_copy := make([][]T, len((*arr)))
+	for i := range *arr {
+		maze_copy[i] = append([]T(nil), (*arr)[i]...)
+	}
+
+	return maze_copy
 }
