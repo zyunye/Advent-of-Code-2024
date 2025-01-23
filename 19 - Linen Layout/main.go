@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -36,58 +37,93 @@ func read_input(file_name string) (map[string]bool, []string) {
 	return available_patterns, desired_patterns
 }
 
-func check_pattern(pattern string, available *map[string]bool) bool {
+type SortedMap struct {
+	m           map[string]int
+	inv_m       map[int][]string
+	sorted_keys []string
+}
+
+func (sm *SortedMap) Sort(invert bool) {
+	if invert {
+		sort.Slice(sm.sorted_keys, func(i, j int) bool {
+			return sm.m[sm.sorted_keys[i]] > sm.m[sm.sorted_keys[j]]
+		})
+	} else {
+		sort.Slice(sm.sorted_keys, func(i, j int) bool {
+			return sm.m[sm.sorted_keys[i]] < sm.m[sm.sorted_keys[j]]
+		})
+	}
+}
+
+func (sm *SortedMap) Add(k string, v int, invert_sort bool) {
+	if _, ok := sm.m[k]; !ok {
+		sm.m[k] = v
+
+		if _, ok := sm.inv_m[v]; !ok {
+			sm.inv_m[v] = make([]string, 0)
+		}
+		sm.inv_m[v] = append(sm.inv_m[v], k)
+
+		sm.sorted_keys = append(sm.sorted_keys, k)
+		sm.Sort(invert_sort)
+	}
+}
+
+func check_pattern(pattern string, available *SortedMap, not_available *map[string]bool) bool {
 	if len(pattern) == 0 {
 		return true
-	} else {
-		_, ok := (*available)[pattern]
+	}
+	if (*not_available)[pattern] {
+		return false
+	}
 
-		if ok {
-			return true
-		}
+	_, ok := available.m[pattern]
+	if ok {
+		return true
+	}
 
-		found_path := false
+	for prefix_len := len(pattern) - 1; prefix_len > 0; prefix_len-- {
 
-		for i := 1; i < len(pattern); i++ {
-			prefix := pattern[:i]
-			postfix := pattern[i:]
+		// Check if the cache has a prefix of the length of the string we're currently looking for
+		if _, ok := available.inv_m[prefix_len]; ok {
 
-			valid := check_pattern(postfix, available)
-			if valid {
-				(*available)[postfix] = true
-				_, ok := (*available)[prefix]
-				if ok {
-					found_path = true
-					(*available)[prefix] = true
+			// If we have cached strings of length `prefix_len`, check to see if our exact prefix exists
+			if _, prefix_found := available.m[pattern[:prefix_len]]; prefix_found {
+
+				// If our exact prefix exists, check to see if we can build the postfix
+				postfix_valid := check_pattern(pattern[prefix_len:], available, not_available)
+
+				if postfix_valid {
+					// If our postfix also matches, cache this current string and return true
+					available.Add(pattern, len(pattern), true)
+					return true
 				}
-
 			}
 		}
-		if found_path {
-			(*available)[pattern] = true
-		}
-		return found_path
 	}
+	(*not_available)[pattern] = true
+	return false
 }
 
 func part1(file_name string) {
 	available, desired := read_input(file_name)
+	not_available := make(map[string]bool)
+
+	sorted_available := SortedMap{
+		m:           make(map[string]int),
+		inv_m:       make(map[int][]string),
+		sorted_keys: make([]string, 0),
+	}
+	for k := range available {
+		sorted_available.Add(k, len(k), true)
+	}
 
 	valid_designs := 0
 
 	for _, cur_design := range desired {
 		fmt.Println(cur_design)
 
-		// sub_pattern_len := 1
-
-		// search_stack := make([]string, 0)
-		// search_stack = append(search_stack, cur_design[:1])
-
-		// for len(search_stack) > 0 {
-		// 	cur_pattern := Pop(&search_stack)
-
-		// }
-		is_valid := check_pattern(cur_design, &available)
+		is_valid := check_pattern(cur_design, &sorted_available, &not_available)
 
 		if is_valid {
 			valid_designs++
