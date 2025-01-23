@@ -5,28 +5,22 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"sort"
 	"strings"
 )
 
-// type PrefixTree struct {
-// 	node string
-// 	next []string
-// }
-
-func read_input(file_name string) (map[string]bool, []string) {
+func read_input(file_name string) ([]string, []string) {
 	file, err := os.Open(file_name)
 	CheckErr(err)
 
 	scanner := bufio.NewScanner(file)
 
-	available_patterns := make(map[string]bool, 0)
+	available_patterns := make([]string, 0)
 	desired_patterns := make([]string, 0)
 
 	scanner.Scan()
 	patterns := strings.Split(scanner.Text(), ",")
 	for _, p := range patterns {
-		available_patterns[strings.TrimSpace(p)] = true
+		available_patterns = append(available_patterns, strings.TrimSpace(p))
 	}
 
 	scanner.Scan()
@@ -37,102 +31,48 @@ func read_input(file_name string) (map[string]bool, []string) {
 	return available_patterns, desired_patterns
 }
 
-type SortedMap struct {
-	m           map[string]int
-	inv_m       map[int][]string
-	sorted_keys []string
-}
-
-func (sm *SortedMap) Sort(invert bool) {
-	if invert {
-		sort.Slice(sm.sorted_keys, func(i, j int) bool {
-			return sm.m[sm.sorted_keys[i]] > sm.m[sm.sorted_keys[j]]
-		})
-	} else {
-		sort.Slice(sm.sorted_keys, func(i, j int) bool {
-			return sm.m[sm.sorted_keys[i]] < sm.m[sm.sorted_keys[j]]
-		})
-	}
-}
-
-func (sm *SortedMap) Add(k string, v int, invert_sort bool) {
-	if _, ok := sm.m[k]; !ok {
-		sm.m[k] = v
-
-		if _, ok := sm.inv_m[v]; !ok {
-			sm.inv_m[v] = make([]string, 0)
-		}
-		sm.inv_m[v] = append(sm.inv_m[v], k)
-
-		sm.sorted_keys = append(sm.sorted_keys, k)
-		sm.Sort(invert_sort)
-	}
-}
-
-func check_pattern(pattern string, available *SortedMap, not_available *map[string]bool) bool {
-	if len(pattern) == 0 {
-		return true
-	}
-	if (*not_available)[pattern] {
-		return false
-	}
-
-	_, ok := available.m[pattern]
-	if ok {
-		return true
-	}
-
-	for prefix_len := len(pattern) - 1; prefix_len > 0; prefix_len-- {
-
-		// Check if the cache has a prefix of the length of the string we're currently looking for
-		if _, ok := available.inv_m[prefix_len]; ok {
-
-			// If we have cached strings of length `prefix_len`, check to see if our exact prefix exists
-			if _, prefix_found := available.m[pattern[:prefix_len]]; prefix_found {
-
-				// If our exact prefix exists, check to see if we can build the postfix
-				postfix_valid := check_pattern(pattern[prefix_len:], available, not_available)
-
-				if postfix_valid {
-					// If our postfix also matches, cache this current string and return true
-					available.Add(pattern, len(pattern), true)
-					return true
+func check_pattern(pattern string, prefixes *[]string, cache *map[string]int) int {
+	if _, found_pattern := (*cache)[pattern]; !found_pattern {
+		if len(pattern) == 0 {
+			return 1
+		} else {
+			num_solutions := 0
+			for _, prefix := range *prefixes {
+				if strings.HasPrefix(pattern, prefix) {
+					num_solutions += check_pattern(pattern[len(prefix):], prefixes, cache)
 				}
 			}
+			(*cache)[pattern] = num_solutions
 		}
 	}
-	(*not_available)[pattern] = true
-	return false
+	return (*cache)[pattern]
 }
 
 func part1(file_name string) {
 	available, desired := read_input(file_name)
-	not_available := make(map[string]bool)
+	cache := make(map[string]int)
 
-	sorted_available := SortedMap{
-		m:           make(map[string]int),
-		inv_m:       make(map[int][]string),
-		sorted_keys: make([]string, 0),
-	}
-	for k := range available {
-		sorted_available.Add(k, len(k), true)
-	}
-
-	valid_designs := 0
-
-	for _, cur_design := range desired {
-		fmt.Println(cur_design)
-
-		is_valid := check_pattern(cur_design, &sorted_available, &not_available)
-
-		if is_valid {
-			valid_designs++
+	valid_patterns := 0
+	for _, pattern := range desired {
+		if check_pattern(pattern, &available, &cache) != 0 {
+			valid_patterns++
 		}
 	}
 
-	fmt.Printf("P.1: %d\n", valid_designs)
+	fmt.Printf("P.1: %d\n", valid_patterns)
 }
-func part2(file_name string) {}
+
+func part2(file_name string) {
+	available, desired := read_input(file_name)
+	cache := make(map[string]int)
+
+	total_ways := 0
+	for _, pattern := range desired {
+		total_ways += check_pattern(pattern, &available, &cache)
+	}
+
+	fmt.Printf("P.2: %d\n", total_ways)
+}
 
 func main() {
 	file_name := "input.txt"
