@@ -68,7 +68,7 @@ func part1(file_name string) {
 		}
 	}
 
-	fmt.Printf("P.1: %d", valid_cheats)
+	fmt.Printf("P.1: %d\n", valid_cheats)
 }
 
 func part2(file_name string) {
@@ -77,89 +77,21 @@ func part2(file_name string) {
 	_ = orig_lineage
 	_ = orig_costs
 
-	search_stack := make([]Position, 0)
-	search_stack = append(search_stack, start)
-	seen := make(map[Position]bool)
-
-	radius := 20
-
 	cheats := make(map[int]int)
 
-	for len(search_stack) > 0 {
-		cur_pos := Pop(&search_stack)
-		seen[cur_pos] = true
+	for start_pos, start_cost := range orig_costs {
+		for jump_pos, jump_cost := range orig_costs {
+			if !start_pos.Equal(jump_pos) {
+				start_to_jump_cost := manhattan_dist(start_pos, jump_pos)
+				jump_to_end_cost := orig_costs[end] - jump_cost
 
-		jumps_in_range := get_valid_points_within_boundary(cur_pos, radius, &maze)
+				if start_to_jump_cost <= 20 {
+					new_cost := start_cost + float64(start_to_jump_cost) + jump_to_end_cost
 
-		for _, jump := range jumps_in_range {
-			if maze[jump.R][jump.C] == "#" {
-				// remaining_ps := radius - manhattan_dist(cur_pos, jump)
-				// if remaining_ps == 0 {
-				// 	continue
-				// }
-
-				// after_jump_points := get_valid_points_within_boundary(jump, remaining_ps, &maze)
-				// escape_routes := make([]Position, 0)
-				// for _, jump_neighbor := range after_jump_points {
-				// 	if maze[jump_neighbor.R][jump_neighbor.C] == "." || maze[jump_neighbor.R][jump_neighbor.C] == "E" {
-				// 		escape_routes = append(escape_routes, jump_neighbor)
-				// 	}
-				// }
-				// if len(escape_routes) == 0 {
-				// 	continue
-				// }
-
-				// for _, escape_pos := range escape_routes {
-				// 	cur_cost := orig_costs[cur_pos]
-				// 	end_cost := orig_costs[end]
-				// 	// jump_cost := orig_costs[jump]
-				// 	escape_cost := orig_costs[escape_pos]
-
-				// 	cur_to_jump_dist := manhattan_dist(cur_pos, jump)
-				// 	// jump_to_end_cost := end_cost - jump_cost
-				// 	cur_to_end_cost := end_cost - cur_cost
-				// 	jump_to_escape_dist := manhattan_dist(jump, escape_pos)
-				// 	escape_to_end_cost := end_cost - escape_cost
-
-				// 	new_cost := cur_cost + float64(cur_to_jump_dist) + float64(jump_to_escape_dist) + escape_to_end_cost
-				// 	if new_cost < cur_to_end_cost {
-				// 		saved_cost := cur_to_end_cost - new_cost - cur_cost
-				// 		cheats[int(saved_cost)] += 1
-				// 	}
-				// }
-
-			} else {
-				if orig_costs[jump] < orig_costs[cur_pos] {
-					continue
+					if new_cost <= orig_costs[end] {
+						cheats[int(orig_costs[end])-int(new_cost)] += 1
+					}
 				}
-				if is_straight_line_unimpeded(cur_pos, jump, &maze) {
-					continue
-				}
-
-				cur_cost := orig_costs[cur_pos]
-				end_cost := orig_costs[end]
-				jump_cost := orig_costs[jump]
-
-				cur_to_jump_dist := manhattan_dist(cur_pos, jump)
-				jump_to_end_cost := end_cost - jump_cost
-				cur_to_end_cost := end_cost - cur_cost
-
-				new_cost := cur_cost + float64(cur_to_jump_dist) + jump_to_end_cost
-
-				if new_cost < cur_to_end_cost {
-					saved_cost := cur_to_end_cost - new_cost - cur_cost
-					cheats[int(saved_cost)] += 1
-				}
-			}
-		}
-
-		neighbors := GetOrthPositions(cur_pos, &maze)
-		for _, neighbor := range neighbors {
-			if maze[neighbor.R][neighbor.C] == "." {
-				if _, ok := seen[neighbor]; !ok {
-					search_stack = append(search_stack, neighbor)
-				}
-
 			}
 		}
 	}
@@ -188,11 +120,20 @@ func part2(file_name string) {
 
 	}(cheats)
 
+	valid_cheats_count := 0
+	for saved, count := range cheats {
+		if saved >= 100 {
+			valid_cheats_count += count
+		}
+	}
+
+	fmt.Printf("P.2: %d\n", valid_cheats_count)
+
 }
 
 func main() {
-	file_name := "test.txt"
+	file_name := "input.txt"
 
-	// part1(file_name)
+	part1(file_name)
 	part2(file_name)
 }
