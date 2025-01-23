@@ -40,8 +40,6 @@ func read_input(file_name string) ([][]string, Position, Position) {
 
 func part1(file_name string) {
 	maze, start, end := read_input(file_name)
-	fmt.Println(start)
-	fmt.Println(end)
 
 	came_from, cost_so_far := a_star(start, end, &maze)
 	_, walls_to_check := traceback(end, &came_from, &maze)
@@ -73,12 +71,22 @@ func part1(file_name string) {
 }
 
 func part2(file_name string) {
+	maze, start, end := read_input(file_name)
+	_, cost_so_far := a_star(start, end, &maze)
+
+	orig_cost := cost_so_far[end]
+	fmt.Println(orig_cost)
+
+	came_from, cost_so_far2 := a_star2(start, end, &maze)
+
+	_ = came_from
+	_ = cost_so_far2
 
 }
 
 func main() {
-	file_name := "input.txt"
+	file_name := "test.txt"
 
-	part1(file_name)
+	// part1(file_name)
 	part2(file_name)
 }
